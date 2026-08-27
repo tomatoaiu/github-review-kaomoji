@@ -1,0 +1,43 @@
+<textarea id="unrelated">Inline comment</textarea>
+<div
+  role="dialog"
+  data-responsive="fullscreen"
+  data-component="AnchoredOverlay"
+  aria-labelledby="anchored-review-title"
+  aria-modal="true"
+  data-visibility-visible=""
+  class="prc-Overlay-Overlay-hash"
+>
+  <span class="sentinel" tabindex="0" aria-hidden="true"></span>
+  <div data-component="Stack">
+    <h1 id="anchored-review-title">Finish your review</h1>
+  </div>
+  <div class="ReviewMenu-module__AnchoredReviewBody__hash">
+    <div class="CommentBox-module__commentBoxContainer__hash">
+      <fieldset class="MarkdownEditor-module__fieldSet__hash">
+        <legend class="sr-only">Add review comment</legend>
+        <markdown-toolbar
+          for="review-summary"
+          role="toolbar"
+          style="display: none"
+        >
+          <md-bold></md-bold>
+        </markdown-toolbar>
+        <div class="Toolbar-module__toolbar__hash">
+          <div data-component="ActionBar">
+            <div role="toolbar" aria-label="Formatting tools">
+              <button type="button" aria-label="Bold">B</button>
+            </div>
+          </div>
+        </div>
+        <textarea
+          data-component="Textarea"
+          id="review-summary"
+          placeholder="Leave a comment"
+          aria-label="Markdown value"
+        ></textarea>
+      </fieldset>
+    </div>
+  </div>
+  <span class="sentinel" tabindex="0" aria-hidden="true"></span>
+</div>
