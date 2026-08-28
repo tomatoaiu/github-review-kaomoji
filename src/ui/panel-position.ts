@@ -14,50 +14,20 @@ export type Viewport = {
 
 export type PanelLayout = {
   height: number
-  kind: "popover" | "side"
+  kind: "popover" | "side-left" | "side-right"
   left: number
   top: number
   width: number
 }
 
-export type DialogExpansion = {
-  left: number
-  panelWidth: number
-  width: number
-}
-
 const MARGIN = 8
-const DIALOG_MARGIN = 16
-const GAP = 8
+const POPOVER_GAP = 8
 const SIDE_WIDTH = 420
 const MIN_SIDE_WIDTH = 320
-const MIN_REVIEW_WIDTH = 400
 const MAX_HEIGHT = 620
 
 function clamp(value: number, minimum: number, maximum: number): number {
   return Math.max(minimum, Math.min(value, maximum))
-}
-
-export function calculateDialogExpansion(
-  dialogWidth: number,
-  viewportWidth: number,
-): DialogExpansion | null {
-  const availableWidth = viewportWidth - DIALOG_MARGIN * 2
-  if (availableWidth < MIN_REVIEW_WIDTH + MIN_SIDE_WIDTH) {
-    return null
-  }
-
-  const width = Math.min(
-    Math.max(dialogWidth, MIN_REVIEW_WIDTH) + SIDE_WIDTH,
-    availableWidth,
-  )
-  const panelWidth = Math.min(SIDE_WIDTH, width - MIN_REVIEW_WIDTH)
-
-  return {
-    left: (viewportWidth - width) / 2,
-    panelWidth,
-    width,
-  }
 }
 
 export function calculatePanelLayout(
@@ -65,8 +35,8 @@ export function calculatePanelLayout(
   toggle: Rectangle,
   viewport: Viewport,
 ): PanelLayout {
-  const rightSpace = viewport.width - dialog.right - GAP - MARGIN
-  const leftSpace = dialog.left - GAP - MARGIN
+  const rightSpace = viewport.width - dialog.right - MARGIN
+  const leftSpace = dialog.left - MARGIN
   const bestSideSpace = Math.max(rightSpace, leftSpace)
 
   if (bestSideSpace >= MIN_SIDE_WIDTH) {
@@ -77,10 +47,11 @@ export function calculatePanelLayout(
       Math.max(420, Math.min(dialog.height, MAX_HEIGHT)),
       availableHeight,
     )
-    const left =
-      rightSpace >= leftSpace ? dialog.right + GAP : dialog.left - GAP - width
+    const useRightSide = rightSpace >= leftSpace
+    const left = useRightSide ? dialog.right : dialog.left - width
+    const kind = useRightSide ? "side-right" : "side-left"
 
-    return { height, kind: "side", left, top, width }
+    return { height, kind, left, top, width }
   }
 
   const width = Math.min(SIDE_WIDTH, viewport.width - MARGIN * 2)
@@ -90,11 +61,11 @@ export function calculatePanelLayout(
     MARGIN,
     viewport.width - MARGIN - width,
   )
-  const below = toggle.bottom + GAP
+  const below = toggle.bottom + POPOVER_GAP
   const top =
     below + height <= viewport.height - MARGIN
       ? below
-      : Math.max(MARGIN, toggle.top - GAP - height)
+      : Math.max(MARGIN, toggle.top - POPOVER_GAP - height)
 
   return { height, kind: "popover", left, top, width }
 }

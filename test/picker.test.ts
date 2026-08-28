@@ -15,9 +15,19 @@ function pressKey(target: Element, key: string): KeyboardEvent {
   return event
 }
 
-function mountPicker(random = () => 0) {
+function mountPicker(
+  random = () => 0,
+  textareaFontFamily?: string,
+  dialogCssText?: string,
+) {
   const dialog = document.createElement("div")
+  if (dialogCssText !== undefined) {
+    dialog.style.cssText = dialogCssText
+  }
   const textarea = document.createElement("textarea")
+  if (textareaFontFamily !== undefined) {
+    textarea.style.fontFamily = textareaFontFamily
+  }
   const host = document.createElement("div")
   const container = document.createElement("div")
   host.append(container)
@@ -133,20 +143,72 @@ describe("createKaomojiPicker", () => {
     expect(document.activeElement).toBe(second)
   })
 
-  it("expands the review dialog into a two-column layout and restores it", () => {
+  it("places the picker beside the review dialog without moving it", () => {
     const { container, dialog } = mountPicker()
     const toggle = container.querySelector<HTMLButtonElement>(".picker-toggle")
     const panel = container.querySelector<HTMLElement>(".picker-panel")
+    dialog.style.setProperty("translate", "12px 0")
+    const originalStyle = dialog.getAttribute("style")
+    const originalTranslate = dialog.style.getPropertyValue("translate")
 
     toggle?.click()
-    expect(dialog.style.width).toBe("1120px")
-    expect(dialog.style.maxWidth).toBe("1120px")
-    expect(dialog.style.paddingRight).toBe("420px")
-    expect(dialog.style.getPropertyPriority("width")).toBe("important")
-    expect(panel?.dataset.layout).toBe("integrated")
+
+    expect(dialog.style.getPropertyValue("translate")).toBe(originalTranslate)
+    expect(dialog.style.width).toBe("")
+    expect(dialog.style.borderTopRightRadius).toBe("0px")
+    expect(dialog.style.borderBottomRightRadius).toBe("0px")
+    expect(dialog.style.boxShadow).toBe("none")
+    expect(dialog.style.getPropertyPriority("border-top-right-radius")).toBe(
+      "important",
+    )
+    expect(dialog.style.getPropertyPriority("box-shadow")).toBe("important")
+    expect(panel?.dataset.layout).toBe("side-right")
+    expect(panel?.style.left).toBe("900px")
+    expect(panel?.style.top).toBe("40px")
+    expect(panel?.style.getPropertyValue("--kaomoji-composite-left")).toBe(
+      "200px",
+    )
+    expect(panel?.style.getPropertyValue("--kaomoji-composite-width")).toBe(
+      "1120px",
+    )
 
     toggle?.click()
-    expect(dialog.getAttribute("style")).toBeNull()
+    expect(dialog.getAttribute("style")).toBe(originalStyle)
+  })
+
+  it("includes the review textarea font stack in face rendering", () => {
+    const { container, textarea } = mountPicker(
+      () => 0,
+      '"GitHub Review Font", monospace',
+    )
+    const root = container.querySelector<HTMLElement>(".kaomoji-picker")
+
+    expect(root?.style.getPropertyValue("--kaomoji-review-font-family")).toBe(
+      window.getComputedStyle(textarea).fontFamily,
+    )
+  })
+
+  it("matches the review dialog border, corners, and shadow", () => {
+    const { container, dialog } = mountPicker(
+      () => 0,
+      undefined,
+      "background-color: rgb(250, 251, 252); border: 2px solid rgb(1, 2, 3); border-radius: 16px; box-shadow: 0 12px 32px rgba(1, 2, 3, 0.25)",
+    )
+    const root = container.querySelector<HTMLElement>(".kaomoji-picker")
+    const dialogStyle = window.getComputedStyle(dialog)
+
+    expect(root?.style.getPropertyValue("--kaomoji-dialog-background")).toBe(
+      dialogStyle.backgroundColor,
+    )
+    expect(root?.style.getPropertyValue("--kaomoji-dialog-border-top")).toBe(
+      `${dialogStyle.borderTopWidth} ${dialogStyle.borderTopStyle} ${dialogStyle.borderTopColor}`,
+    )
+    expect(
+      root?.style.getPropertyValue("--kaomoji-dialog-border-top-left-radius"),
+    ).toBe(dialogStyle.borderTopLeftRadius)
+    expect(root?.style.getPropertyValue("--kaomoji-dialog-box-shadow")).toBe(
+      dialogStyle.boxShadow,
+    )
   })
 
   it("uses the browser top layer when the Popover API is available", () => {

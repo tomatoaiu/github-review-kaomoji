@@ -6,10 +6,7 @@ import {
 } from "../catalog"
 import type { KaomojiEntry } from "../catalog"
 import { insertKaomoji } from "../github/insert-kaomoji"
-import {
-  calculateDialogExpansion,
-  calculatePanelLayout,
-} from "./panel-position"
+import { calculatePanelLayout } from "./panel-position"
 
 export type KaomojiPickerOptions = {
   dialog: HTMLElement
@@ -60,19 +57,50 @@ export function createKaomojiPicker(
     open: false,
     query: "",
   }
-  let dialogHadStyleAttribute = false
-  let dialogStyleSnapshot: Array<{
+  let dialogJoinSnapshot: Array<{
     name: string
     priority: string
     value: string
   }> | null = null
-  let dialogTranslateX = 0
-  let dialogWidthBeforeOpen: number | null = null
   let disposed = false
   let previousRandomFace: string | null = null
   let visibleEntries: KaomojiEntry[] = []
 
   const root = element("div", "kaomoji-picker")
+  const reviewFontFamily = window
+    .getComputedStyle(options.textarea)
+    .fontFamily.trim()
+  if (reviewFontFamily.length > 0) {
+    root.style.setProperty("--kaomoji-review-font-family", reviewFontFamily)
+  }
+  const syncDialogAppearance = (): void => {
+    const style = window.getComputedStyle(options.dialog)
+    const border = (side: "Bottom" | "Left" | "Right" | "Top") =>
+      `${style[`border${side}Width`]} ${style[`border${side}Style`]} ${style[`border${side}Color`]}`
+    root.style.setProperty("--kaomoji-dialog-background", style.backgroundColor)
+    root.style.setProperty("--kaomoji-dialog-border-bottom", border("Bottom"))
+    root.style.setProperty("--kaomoji-dialog-border-left", border("Left"))
+    root.style.setProperty("--kaomoji-dialog-border-right", border("Right"))
+    root.style.setProperty("--kaomoji-dialog-border-top", border("Top"))
+    root.style.setProperty(
+      "--kaomoji-dialog-border-bottom-left-radius",
+      style.borderBottomLeftRadius,
+    )
+    root.style.setProperty(
+      "--kaomoji-dialog-border-bottom-right-radius",
+      style.borderBottomRightRadius,
+    )
+    root.style.setProperty(
+      "--kaomoji-dialog-border-top-left-radius",
+      style.borderTopLeftRadius,
+    )
+    root.style.setProperty(
+      "--kaomoji-dialog-border-top-right-radius",
+      style.borderTopRightRadius,
+    )
+    root.style.setProperty("--kaomoji-dialog-box-shadow", style.boxShadow)
+  }
+  syncDialogAppearance()
   const toggle = button("picker-toggle", "(*´ω｀*) 顔文字")
   toggle.setAttribute("aria-controls", "github-review-kaomoji-panel")
   toggle.setAttribute("aria-expanded", "false")
@@ -188,72 +216,63 @@ export function createKaomojiPicker(
     results.replaceChildren(fragment)
   }
 
-  const expandedDialogProperties = [
-    "box-sizing",
-    "max-width",
-    "padding-right",
-    "translate",
-    "width",
+  const compositeProperties = [
+    "--kaomoji-composite-height",
+    "--kaomoji-composite-left",
+    "--kaomoji-composite-top",
+    "--kaomoji-composite-width",
+  ] as const
+  const dialogJoinProperties = [
+    "border-bottom-left-radius",
+    "border-bottom-right-radius",
+    "border-top-left-radius",
+    "border-top-right-radius",
+    "box-shadow",
   ] as const
 
-  const expandDialog = (
-    width: number,
-    left: number,
-    panelWidth: number,
-  ): DOMRect => {
-    if (dialogStyleSnapshot === null) {
-      dialogHadStyleAttribute = options.dialog.hasAttribute("style")
-      dialogStyleSnapshot = expandedDialogProperties.map((name) => ({
-        name,
-        priority: options.dialog.style.getPropertyPriority(name),
-        value: options.dialog.style.getPropertyValue(name),
-      }))
-    }
-
-    options.dialog.style.setProperty("box-sizing", "border-box", "important")
-    options.dialog.style.setProperty("max-width", `${width}px`, "important")
-    options.dialog.style.setProperty(
-      "padding-right",
-      `${panelWidth}px`,
-      "important",
-    )
-    options.dialog.style.setProperty("width", `${width}px`, "important")
-    options.dialog.style.setProperty(
-      "translate",
-      `${dialogTranslateX}px 0`,
-      "important",
-    )
-
-    let dialogRect = options.dialog.getBoundingClientRect()
-    const correction = left - dialogRect.left
-    if (Math.abs(correction) >= 0.5) {
-      dialogTranslateX += correction
-      options.dialog.style.setProperty(
-        "translate",
-        `${dialogTranslateX}px 0`,
-        "important",
-      )
-      dialogRect = options.dialog.getBoundingClientRect()
-    }
-    return dialogRect
-  }
-
-  const restoreDialog = (): void => {
-    if (dialogStyleSnapshot === null) {
+  const applyDialogJoinSnapshot = (): void => {
+    if (dialogJoinSnapshot === null) {
       return
     }
-    for (const { name, priority, value } of dialogStyleSnapshot) {
+    for (const { name, priority, value } of dialogJoinSnapshot) {
       if (value.length === 0) {
         options.dialog.style.removeProperty(name)
       } else {
         options.dialog.style.setProperty(name, value, priority)
       }
     }
-    if (!dialogHadStyleAttribute && options.dialog.style.length === 0) {
-      options.dialog.removeAttribute("style")
+  }
+
+  const restoreDialogJoinStyles = (): void => {
+    applyDialogJoinSnapshot()
+    dialogJoinSnapshot = null
+  }
+
+  const joinDialogEdge = (
+    layout: "popover" | "side-left" | "side-right",
+  ): void => {
+    if (layout === "popover") {
+      restoreDialogJoinStyles()
+      return
     }
-    dialogStyleSnapshot = null
-    dialogTranslateX = 0
+    if (dialogJoinSnapshot === null) {
+      dialogJoinSnapshot = dialogJoinProperties.map((name) => ({
+        name,
+        priority: options.dialog.style.getPropertyPriority(name),
+        value: options.dialog.style.getPropertyValue(name),
+      }))
+    } else {
+      applyDialogJoinSnapshot()
+    }
+
+    const joinedCorners =
+      layout === "side-right"
+        ? ["border-bottom-right-radius", "border-top-right-radius"]
+        : ["border-bottom-left-radius", "border-top-left-radius"]
+    for (const name of joinedCorners) {
+      options.dialog.style.setProperty(name, "0", "important")
+    }
+    options.dialog.style.setProperty("box-shadow", "none", "important")
   }
 
   const updatePosition = (): void => {
@@ -265,37 +284,47 @@ export function createKaomojiPicker(
       height: window.innerHeight,
       width: window.innerWidth,
     }
+    applyDialogJoinSnapshot()
+    syncDialogAppearance()
     const dialogRect = options.dialog.getBoundingClientRect()
-    const expansion = calculateDialogExpansion(
-      dialogWidthBeforeOpen ?? dialogRect.width,
-      viewport.width,
-    )
-
-    if (expansion !== null) {
-      const expandedDialog = expandDialog(
-        expansion.width,
-        expansion.left,
-        expansion.panelWidth,
-      )
-      panel.dataset.layout = "integrated"
-      panel.style.height = `${expandedDialog.height}px`
-      panel.style.left = `${expandedDialog.right - expansion.panelWidth}px`
-      panel.style.top = `${expandedDialog.top}px`
-      panel.style.width = `${expansion.panelWidth}px`
-      return
-    }
-
-    restoreDialog()
     const layout = calculatePanelLayout(
-      options.dialog.getBoundingClientRect(),
+      dialogRect,
       toggle.getBoundingClientRect(),
       viewport,
     )
+    joinDialogEdge(layout.kind)
     panel.dataset.layout = layout.kind
     panel.style.height = `${layout.height}px`
     panel.style.left = `${layout.left}px`
     panel.style.top = `${layout.top}px`
     panel.style.width = `${layout.width}px`
+
+    if (layout.kind === "popover") {
+      for (const property of compositeProperties) {
+        panel.style.removeProperty(property)
+      }
+      return
+    }
+    const compositeLeft = Math.min(dialogRect.left, layout.left)
+    const compositeRight = Math.max(
+      dialogRect.right,
+      layout.left + layout.width,
+    )
+    const compositeTop = Math.min(dialogRect.top, layout.top)
+    const compositeBottom = Math.max(
+      dialogRect.bottom,
+      layout.top + layout.height,
+    )
+    panel.style.setProperty(
+      "--kaomoji-composite-height",
+      `${compositeBottom - compositeTop}px`,
+    )
+    panel.style.setProperty("--kaomoji-composite-left", `${compositeLeft}px`)
+    panel.style.setProperty("--kaomoji-composite-top", `${compositeTop}px`)
+    panel.style.setProperty(
+      "--kaomoji-composite-width",
+      `${compositeRight - compositeLeft}px`,
+    )
   }
 
   const close = (focusToggle: boolean): void => {
@@ -307,8 +336,7 @@ export function createKaomojiPicker(
       panel.hidePopover()
     }
     panel.hidden = true
-    restoreDialog()
-    dialogWidthBeforeOpen = null
+    restoreDialogJoinStyles()
     toggle.setAttribute("aria-expanded", "false")
     if (focusToggle) {
       toggle.focus({ preventScroll: true })
@@ -319,7 +347,6 @@ export function createKaomojiPicker(
     if (state.open) {
       return
     }
-    dialogWidthBeforeOpen = options.dialog.getBoundingClientRect().width
     state.open = true
     refresh()
     panel.hidden = false
@@ -543,8 +570,7 @@ export function createKaomojiPicker(
         return
       }
       disposed = true
-      restoreDialog()
-      dialogWidthBeforeOpen = null
+      restoreDialogJoinStyles()
       resizeObserver?.disconnect()
       document.removeEventListener("pointerdown", onDocumentPointerDown, true)
       window.removeEventListener("resize", onViewportChange)
