@@ -75,14 +75,37 @@ describe("kaomoji catalog", () => {
     expect(normalizeSearchText(input)).toBe(expected)
   })
 
+  it.each([
+    ["ありがとうございます", "感謝"],
+    ["承認します", "承認"],
+    ["了解です", "承認"],
+    ["うれしい", "喜び"],
+    ["おめでとうございます", "祝福"],
+    ["すみませんでした", "謝罪"],
+    ["どうして？", "困惑"],
+    ["ビックリした", "驚き"],
+    ["かなしい", "悲しみ"],
+    ["むかつく", "怒り"],
+  ])("matches a natural Japanese query: %s", (query, category) => {
+    const results = searchKaomoji(ALL_CATEGORIES, query)
+
+    expect(results.length).toBeGreaterThan(0)
+    expect(results.every((entry) => entry.category === category)).toBe(true)
+  })
+
   it("searches category keywords and face text", () => {
     const approvals = searchKaomoji(ALL_CATEGORIES, "lgtm")
+    const partialThanks = searchKaomoji(ALL_CATEGORIES, "ありが")
     const omegaFaces = searchKaomoji(ALL_CATEGORIES, "ω")
 
     expect(approvals).toHaveLength(90)
     expect(approvals.every((entry) => entry.category === "承認")).toBe(true)
+    expect(partialThanks).toHaveLength(60)
+    expect(partialThanks.every((entry) => entry.category === "感謝")).toBe(true)
     expect(omegaFaces.length).toBeGreaterThan(0)
     expect(omegaFaces.every((entry) => entry.face.includes("ω"))).toBe(true)
+    expect(searchKaomoji(ALL_CATEGORIES, "あ")).toEqual([])
+    expect(searchKaomoji(ALL_CATEGORIES, "smoke")).toEqual([])
     expect(searchKaomoji("感謝", "not-found")).toEqual([])
   })
 })
