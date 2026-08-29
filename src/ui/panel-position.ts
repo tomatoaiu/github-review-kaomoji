@@ -35,14 +35,20 @@ export function calculatePanelLayout(
   toggle: Rectangle,
   viewport: Viewport,
 ): PanelLayout {
-  const rightSpace = viewport.width - dialog.right - MARGIN
-  const leftSpace = dialog.left - MARGIN
+  const horizontalMargin = Math.min(MARGIN, viewport.width / 2)
+  const verticalMargin = Math.min(MARGIN, viewport.height / 2)
+  const rightSpace = viewport.width - dialog.right - horizontalMargin
+  const leftSpace = dialog.left - horizontalMargin
   const bestSideSpace = Math.max(rightSpace, leftSpace)
 
   if (bestSideSpace >= MIN_SIDE_WIDTH) {
     const width = Math.min(SIDE_WIDTH, bestSideSpace)
-    const top = clamp(dialog.top, MARGIN, viewport.height - MARGIN - 240)
-    const availableHeight = viewport.height - top - MARGIN
+    const top = clamp(
+      dialog.top,
+      verticalMargin,
+      viewport.height - verticalMargin - 240,
+    )
+    const availableHeight = viewport.height - top - verticalMargin
     const height = Math.min(
       Math.max(420, Math.min(dialog.height, MAX_HEIGHT)),
       availableHeight,
@@ -54,18 +60,23 @@ export function calculatePanelLayout(
     return { height, kind, left, top, width }
   }
 
-  const width = Math.min(SIDE_WIDTH, viewport.width - MARGIN * 2)
-  const height = Math.min(520, viewport.height - MARGIN * 2)
+  const width = Math.min(SIDE_WIDTH, viewport.width - horizontalMargin * 2)
+  const height = Math.min(520, viewport.height - verticalMargin * 2)
   const left = clamp(
     toggle.right - width,
-    MARGIN,
-    viewport.width - MARGIN - width,
+    horizontalMargin,
+    viewport.width - horizontalMargin - width,
   )
   const below = toggle.bottom + POPOVER_GAP
-  const top =
-    below + height <= viewport.height - MARGIN
+  const preferredTop =
+    below + height <= viewport.height - verticalMargin
       ? below
-      : Math.max(MARGIN, toggle.top - POPOVER_GAP - height)
+      : toggle.top - POPOVER_GAP - height
+  const top = clamp(
+    preferredTop,
+    verticalMargin,
+    viewport.height - verticalMargin - height,
+  )
 
   return { height, kind: "popover", left, top, width }
 }

@@ -50,4 +50,23 @@ describe("calculatePanelLayout", () => {
     expect(layout.left + layout.width).toBeLessThanOrEqual(892)
     expect(layout.top + layout.height).toBeLessThanOrEqual(692)
   })
+
+  it.each([
+    { height: 100, width: 200 },
+    { height: 15, width: 15 },
+  ])("stays within a $width x $height viewport", (viewport) => {
+    const layout = calculatePanelLayout(
+      rectangle(200, 40, 700, 600),
+      rectangle(200, 116, 80, 28),
+      viewport,
+    )
+
+    expect(layout.kind).toBe("popover")
+    expect(layout.height).toBeGreaterThanOrEqual(0)
+    expect(layout.width).toBeGreaterThanOrEqual(0)
+    expect(layout.left).toBeGreaterThanOrEqual(0)
+    expect(layout.top).toBeGreaterThanOrEqual(0)
+    expect(layout.left + layout.width).toBeLessThanOrEqual(viewport.width)
+    expect(layout.top + layout.height).toBeLessThanOrEqual(viewport.height)
+  })
 })
