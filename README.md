@@ -73,6 +73,39 @@ Create a distribution ZIP:
 pnpm zip
 ```
 
+## Releases
+
+Releases are prepared from Conventional Commit titles. Release Please keeps a
+release pull request up to date and chooses the next version from merged
+changes:
+
+- `fix` creates a patch release
+- `feat` creates a minor release
+- `!` or `BREAKING CHANGE` creates a major release
+
+Merging the release pull request runs all quality checks, packages the
+extension, generates signed build provenance, and publishes the ZIP and its
+SHA-256 checksum in an immutable GitHub Release. The first `v0.1.0` release is
+started manually from the **Release** workflow; subsequent releases start
+automatically when a Release Please pull request is merged.
+
+Immutable Releases must remain enabled in the repository settings. Every
+published release and its ZIP asset are verified by the workflow after
+publication.
+
+Download and verify a release with GitHub CLI:
+
+```sh
+gh release download v0.1.0
+gh release verify v0.1.0
+gh attestation verify github-review-kaomoji-0.1.0-chrome.zip \
+  --repo tomatoaiu/github-review-kaomoji
+```
+
+To install a release without the Chrome Web Store, extract the downloaded ZIP
+and select the extracted directory with **Load unpacked** at
+`chrome://extensions`.
+
 ## Compatibility
 
 The supported environment is the latest stable Chrome on `github.com`.
