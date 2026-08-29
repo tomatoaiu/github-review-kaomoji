@@ -48,6 +48,7 @@ button {
 
 .picker-toggle:focus-visible,
 .random-button:focus-visible,
+.settings-button:focus-visible,
 .category-button:focus-visible,
 .face-button:focus-visible {
   outline: 2px solid var(--focus-outlineColor, #0969da);
@@ -146,11 +147,13 @@ button {
 }
 
 .picker-title {
+  flex: none;
   font-size: 14px;
+  white-space: nowrap;
 }
 
 .picker-header-actions {
-  gap: 8px;
+  gap: 6px;
 }
 
 .result-count {
@@ -159,16 +162,55 @@ button {
   white-space: nowrap;
 }
 
-.random-button {
+.random-button,
+.settings-button {
   background: var(--button-default-bgColor-rest, #f6f8fa);
   border: 1px solid var(--button-default-borderColor-rest, #d1d9e0);
   border-radius: 6px;
   padding: 4px 8px;
 }
 
-.random-button:hover {
+.random-button {
+  white-space: nowrap;
+}
+
+.settings-button {
+  min-width: 28px;
+  padding-inline: 6px;
+}
+
+.random-button:hover,
+.settings-button:hover,
+.settings-button[aria-expanded="true"] {
   background: var(--button-default-bgColor-hover, #eff2f5);
   border-color: var(--borderColor-accent-muted, #54aeff);
+}
+
+.picker-settings {
+  align-items: center;
+  background: var(--bgColor-muted, #f6f8fa);
+  border-block: 1px solid var(--borderColor-muted, #d8dee4);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  padding: 8px 14px;
+}
+
+.picker-settings[hidden] {
+  display: none;
+}
+
+.setting-option {
+  align-items: center;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.setting-option input {
+  accent-color: var(--fgColor-accent, #0969da);
+  margin: 0;
 }
 
 .picker-search {
@@ -287,6 +329,41 @@ button {
   grid-column: 1 / -1;
   padding: 32px 12px;
   text-align: center;
+}
+
+@media (max-width: 360px) {
+  .picker-header {
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .picker-header-actions {
+    gap: 3px;
+  }
+
+  .random-button {
+    min-width: 28px;
+    padding-inline: 6px;
+  }
+
+  .random-label {
+    display: none;
+  }
+
+  .result-count {
+    font-size: 9px;
+  }
+
+  .picker-settings {
+    flex-wrap: nowrap;
+    font-size: 10px;
+    gap: 8px;
+    padding: 4px 6px;
+  }
+
+  .setting-option {
+    gap: 3px;
+  }
 }
 
 .visually-hidden {

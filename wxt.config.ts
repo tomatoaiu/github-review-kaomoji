@@ -7,5 +7,6 @@ export default defineConfig({
     name: "GitHub Review Kaomoji",
     description:
       "Pick and insert kaomoji into the final GitHub pull request review comment.",
+    permissions: ["storage"],
   },
 })

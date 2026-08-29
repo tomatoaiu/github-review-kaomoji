@@ -1,9 +1,14 @@
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
+import type { PickerSettings } from "../src/settings"
 import { createKaomojiPicker } from "../src/ui/picker"
 import type { KaomojiPicker } from "../src/ui/picker"
 
 const mountedPickers: KaomojiPicker[] = []
+const manualSettings: PickerSettings = {
+  autoClose: true,
+  autoOpen: false,
+}
 
 function pressKey(target: Element, key: string): KeyboardEvent {
   const event = new KeyboardEvent("keydown", {
@@ -19,6 +24,9 @@ function mountPicker(
   random = () => 0,
   textareaFontFamily?: string,
   dialogCssText?: string,
+  settings: PickerSettings = manualSettings,
+  saveSettings: (settings: PickerSettings) => Promise<void> = () =>
+    Promise.resolve(),
 ) {
   const dialog = document.createElement("div")
   if (dialogCssText !== undefined) {
@@ -50,6 +58,8 @@ function mountPicker(
     dialog,
     host,
     random,
+    saveSettings,
+    settings,
     textarea,
     viewport: () => ({ height: 900, width: 1440 }),
   })
@@ -265,5 +275,85 @@ describe("createKaomojiPicker", () => {
     expect(container.querySelector<HTMLElement>(".picker-panel")?.hidden).toBe(
       true,
     )
+  })
+
+  it("opens automatically without stealing focus", () => {
+    const focusedButton = document.createElement("button")
+    document.body.append(focusedButton)
+    focusedButton.focus()
+
+    const { container } = mountPicker(() => 0, undefined, undefined, {
+      autoClose: false,
+      autoOpen: true,
+    })
+
+    expect(container.querySelector<HTMLElement>(".picker-panel")?.hidden).toBe(
+      false,
+    )
+    expect(
+      container
+        .querySelector<HTMLButtonElement>(".picker-toggle")
+        ?.getAttribute("aria-expanded"),
+    ).toBe("true")
+    expect(container.querySelectorAll("[data-face-index]")).toHaveLength(1000)
+    expect(document.activeElement).toBe(focusedButton)
+  })
+
+  it("keeps the panel open after insertion when auto-close is off", () => {
+    const { container, textarea } = mountPicker(() => 0, undefined, undefined, {
+      autoClose: false,
+      autoOpen: true,
+    })
+    const firstFace =
+      container.querySelector<HTMLButtonElement>("[data-face-index]")
+    const face = firstFace?.textContent ?? ""
+
+    firstFace?.click()
+
+    expect(textarea.value).toBe(face)
+    expect(container.querySelector<HTMLElement>(".picker-panel")?.hidden).toBe(
+      false,
+    )
+    expect(document.activeElement).toBe(textarea)
+  })
+
+  it("changes and saves picker settings", async () => {
+    const saveSettings = vi
+      .fn<(settings: PickerSettings) => Promise<void>>()
+      .mockResolvedValue(undefined)
+    const { container } = mountPicker(
+      () => 0,
+      undefined,
+      undefined,
+      { autoClose: false, autoOpen: true },
+      saveSettings,
+    )
+    const settingsButton =
+      container.querySelector<HTMLButtonElement>(".settings-button")
+    const settingsPanel =
+      container.querySelector<HTMLElement>(".picker-settings")
+    const [autoOpenCheckbox, autoCloseCheckbox] = [
+      ...container.querySelectorAll<HTMLInputElement>(
+        '.picker-settings input[type="checkbox"]',
+      ),
+    ]
+
+    settingsButton?.click()
+    expect(settingsPanel?.hidden).toBe(false)
+    expect(autoOpenCheckbox?.checked).toBe(true)
+    expect(autoCloseCheckbox?.checked).toBe(false)
+
+    autoOpenCheckbox?.click()
+    autoCloseCheckbox?.click()
+    await Promise.resolve()
+
+    expect(saveSettings).toHaveBeenNthCalledWith(1, {
+      autoClose: false,
+      autoOpen: false,
+    })
+    expect(saveSettings).toHaveBeenNthCalledWith(2, {
+      autoClose: true,
+      autoOpen: false,
+    })
   })
 })

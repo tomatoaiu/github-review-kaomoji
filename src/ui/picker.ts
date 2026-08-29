@@ -6,12 +6,15 @@ import {
 } from "../catalog"
 import type { KaomojiEntry } from "../catalog"
 import { insertKaomoji } from "../github/insert-kaomoji"
+import type { PickerSettings } from "../settings"
 import { calculatePanelLayout } from "./panel-position"
 
 export type KaomojiPickerOptions = {
   dialog: HTMLElement
   host: HTMLElement
   random?: () => number
+  saveSettings: (settings: PickerSettings) => Promise<void>
+  settings: PickerSettings
   textarea: HTMLTextAreaElement
   viewport?: () => { height: number; width: number }
 }
@@ -63,6 +66,7 @@ export function createKaomojiPicker(
     value: string
   }> | null = null
   let disposed = false
+  let pickerSettings = { ...options.settings }
   let previousRandomFace: string | null = null
   let visibleEntries: KaomojiEntry[] = []
 
@@ -119,12 +123,40 @@ export function createKaomojiPicker(
   const header = element("header", "picker-header")
   const title = element("strong", "picker-title", "顔文字")
   const headerActions = element("div", "picker-header-actions")
-  const randomButton = button("random-button", "↻ ランダム")
+  const settingsButton = button("settings-button", "⚙")
+  settingsButton.title = "設定"
+  settingsButton.setAttribute("aria-controls", "github-review-kaomoji-settings")
+  settingsButton.setAttribute("aria-expanded", "false")
+  settingsButton.setAttribute("aria-label", "顔文字ピッカーの設定")
+  const randomButton = button("random-button", "↻")
+  randomButton.append(element("span", "random-label", " ランダム"))
   randomButton.title = "表示中の候補からランダムに選択"
+  randomButton.setAttribute("aria-label", "ランダムに選択")
   const count = element("span", "result-count")
   count.setAttribute("aria-live", "polite")
-  headerActions.append(randomButton, count)
+  headerActions.append(settingsButton, randomButton, count)
   header.append(title, headerActions)
+
+  const settingsPanel = element("div", "picker-settings")
+  settingsPanel.id = "github-review-kaomoji-settings"
+  settingsPanel.hidden = true
+  const autoOpenOption = element("label", "setting-option")
+  const autoOpenCheckbox = element("input")
+  autoOpenCheckbox.type = "checkbox"
+  autoOpenCheckbox.checked = pickerSettings.autoOpen
+  autoOpenOption.append(
+    autoOpenCheckbox,
+    element("span", "setting-label", "自動で開く"),
+  )
+  const autoCloseOption = element("label", "setting-option")
+  const autoCloseCheckbox = element("input")
+  autoCloseCheckbox.type = "checkbox"
+  autoCloseCheckbox.checked = pickerSettings.autoClose
+  autoCloseOption.append(
+    autoCloseCheckbox,
+    element("span", "setting-label", "自動で閉じる"),
+  )
+  settingsPanel.append(autoOpenOption, autoCloseOption)
 
   const search = element("input", "picker-search")
   search.type = "search"
@@ -152,7 +184,7 @@ export function createKaomojiPicker(
   const status = element("div", "visually-hidden")
   status.setAttribute("aria-live", "polite")
   status.setAttribute("role", "status")
-  panel.append(header, search, hint, body, status)
+  panel.append(header, settingsPanel, search, hint, body, status)
   root.append(toggle, panel)
   container.replaceChildren(root)
 
@@ -336,6 +368,8 @@ export function createKaomojiPicker(
       panel.hidePopover()
     }
     panel.hidden = true
+    settingsPanel.hidden = true
+    settingsButton.setAttribute("aria-expanded", "false")
     restoreDialogJoinStyles()
     toggle.setAttribute("aria-expanded", "false")
     if (focusToggle) {
@@ -343,7 +377,7 @@ export function createKaomojiPicker(
     }
   }
 
-  const open = (): void => {
+  const open = (focusSearch: boolean): void => {
     if (state.open) {
       return
     }
@@ -355,11 +389,13 @@ export function createKaomojiPicker(
     }
     toggle.setAttribute("aria-expanded", "true")
     updatePosition()
-    queueMicrotask(() => {
-      if (state.open && !disposed) {
-        search.focus({ preventScroll: true })
-      }
-    })
+    if (focusSearch) {
+      queueMicrotask(() => {
+        if (state.open && !disposed) {
+          search.focus({ preventScroll: true })
+        }
+      })
+    }
   }
 
   const entryForButton = (
@@ -369,11 +405,29 @@ export function createKaomojiPicker(
     return Number.isInteger(index) ? (visibleEntries[index] ?? null) : null
   }
 
+  const updatePickerSettings = (settings: Partial<PickerSettings>): void => {
+    pickerSettings = { ...pickerSettings, ...settings }
+    void options.saveSettings({ ...pickerSettings }).catch(() => {
+      status.textContent = "設定を保存できませんでした"
+    })
+  }
+
+  settingsButton.addEventListener("click", () => {
+    settingsPanel.hidden = !settingsPanel.hidden
+    settingsButton.setAttribute("aria-expanded", String(!settingsPanel.hidden))
+  })
+  autoOpenCheckbox.addEventListener("change", () => {
+    updatePickerSettings({ autoOpen: autoOpenCheckbox.checked })
+  })
+  autoCloseCheckbox.addEventListener("change", () => {
+    updatePickerSettings({ autoClose: autoCloseCheckbox.checked })
+  })
+
   toggle.addEventListener("click", () => {
     if (state.open) {
       close(true)
     } else {
-      open()
+      open(true)
     }
   })
 
@@ -456,7 +510,9 @@ export function createKaomojiPicker(
     }
     const entry = entryForButton(target)
     if (entry !== null && insertKaomoji(options.textarea, entry.face)) {
-      close(false)
+      if (pickerSettings.autoClose) {
+        close(false)
+      }
     }
   })
   results.addEventListener("keydown", (event) => {
@@ -563,6 +619,10 @@ export function createKaomojiPicker(
       ? null
       : new ResizeObserver(updatePosition)
   resizeObserver?.observe(options.dialog)
+
+  if (pickerSettings.autoOpen) {
+    open(false)
+  }
 
   return {
     dispose() {

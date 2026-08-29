@@ -13,6 +13,7 @@ GitHub.
 - A category sidebar beside GitHub's **Finish your review** dialog
 - Compact popover fallback when the viewport has no room for the sidebar
 - Random candidate selection without accidental insertion
+- Persistent auto-open and close-after-insert settings
 - Cursor-aware insertion and selected-text replacement
 - GitHub SPA and dynamically rendered review-dialog support
 - Light and dark theme support through GitHub color variables
@@ -31,12 +32,19 @@ conversation comments or inline review comments.
 From the category sidebar, <kbd>↑</kbd>/<kbd>↓</kbd> changes category,
 <kbd>→</kbd> enters results, and <kbd>←</kbd> returns to search.
 
+## Picker settings
+
+Use the **⚙** button in the picker header to change whether the picker opens
+automatically and whether it closes after inserting a face. The defaults open
+the picker automatically and keep it open after insertion.
+
 ## Privacy and permissions
 
 The content script is available on `https://github.com/*` so it can follow
 GitHub's same-document SPA navigation. It only observes and mounts UI on pull
-request routes. The extension has no extension permissions, performs no remote
-network requests, and stores no data.
+request routes. The extension only requests the `storage` permission to save
+the two picker settings locally. It performs no remote network requests and
+stores no review text or browsing data.
 
 ## Development
 

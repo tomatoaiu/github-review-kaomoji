@@ -7,6 +7,7 @@ import type { ShadowRootContentScriptUi } from "wxt/utils/content-script-ui/shad
 import { findReviewForm } from "../../github/review-form"
 import type { ReviewFormElements } from "../../github/review-form"
 import { isPullRequestRoute } from "../../github/route"
+import { loadPickerSettings, savePickerSettings } from "../../settings"
 import { createKaomojiPicker } from "../../ui/picker"
 import type { KaomojiPicker } from "../../ui/picker"
 
@@ -60,6 +61,7 @@ export default defineContentScript({
 
       let host: HTMLElement | null = null
       try {
+        const settings = await loadPickerSettings()
         const ui = await createShadowRootUi<KaomojiPicker>(ctx, {
           name: "github-review-kaomoji",
           position: "inline",
@@ -71,6 +73,8 @@ export default defineContentScript({
             return createKaomojiPicker(container, {
               dialog: elements.dialog,
               host: shadowHost,
+              saveSettings: savePickerSettings,
+              settings,
               textarea: elements.textarea,
             })
           },
