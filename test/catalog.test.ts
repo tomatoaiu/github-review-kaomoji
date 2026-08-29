@@ -4,6 +4,7 @@ import {
   ALL_CATEGORIES,
   kaomojiCategories,
   kaomojiCount,
+  normalizeSearchText,
   searchKaomoji,
 } from "../src/catalog"
 
@@ -64,6 +65,14 @@ describe("kaomoji catalog", () => {
         expect(face.length).toBeLessThanOrEqual(48)
       }
     }
+  })
+
+  it.each([
+    [" ＬＧＴＭ ", "lgtm"],
+    ["ビックリ", "びっくり"],
+    ["ﾋﾞｯｸﾘ", "びっくり"],
+  ])("normalizes search text: %s", (input, expected) => {
+    expect(normalizeSearchText(input)).toBe(expected)
   })
 
   it("searches category keywords and face text", () => {

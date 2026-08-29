@@ -32,7 +32,13 @@ const searchTermsByCategory = new Map(
 )
 
 export function normalizeSearchText(value: string): string {
-  return value.normalize("NFKC").trim().toLocaleLowerCase("ja-JP")
+  return value
+    .normalize("NFKC")
+    .trim()
+    .toLocaleLowerCase("ja-JP")
+    .replace(/[ァ-ヶ]/gu, (character) =>
+      String.fromCharCode(character.charCodeAt(0) - 0x60),
+    )
 }
 
 export function searchKaomoji(category: string, query: string): KaomojiEntry[] {
