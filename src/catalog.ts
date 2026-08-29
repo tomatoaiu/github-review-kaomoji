@@ -49,34 +49,54 @@ function queryContainsTerm(query: string, term: string): boolean {
     : query.includes(term)
 }
 
-function matchesIntentQuery(query: string, terms: string[]): boolean {
-  return terms.some(
-    (term) =>
-      query === term ||
-      queryContainsTerm(query, term) ||
-      (query.length >= 2 && term.startsWith(query)),
-  )
+function intentMatchScore(query: string, terms: string[]): number {
+  let score = 0
+  for (const term of terms) {
+    if (query === term) {
+      return 3
+    }
+    if (queryContainsTerm(query, term)) {
+      score = Math.max(score, 2)
+    } else if (query.length >= 2 && term.startsWith(query)) {
+      score = Math.max(score, 1)
+    }
+  }
+  return score
 }
+
+const normalizedFaces = entries.map(({ face }) => normalizeSearchText(face))
 
 export function searchKaomoji(category: string, query: string): KaomojiEntry[] {
   const normalizedQuery = normalizeSearchText(query)
-  const matchingCategories = new Set(
-    [...searchTermsByCategory]
-      .filter(([, terms]) => matchesIntentQuery(normalizedQuery, terms))
-      .map(([matchingCategory]) => matchingCategory),
+  if (normalizedQuery.length === 0) {
+    return entries.filter(
+      (entry) => category === ALL_CATEGORIES || entry.category === category,
+    )
+  }
+
+  const categoryScores = new Map(
+    [...searchTermsByCategory].map(([searchCategory, terms]) => [
+      searchCategory,
+      intentMatchScore(normalizedQuery, terms),
+    ]),
   )
 
-  return entries.filter((entry) => {
-    if (category !== ALL_CATEGORIES && entry.category !== category) {
-      return false
-    }
-    if (normalizedQuery.length === 0) {
-      return true
-    }
-
-    return (
-      normalizeSearchText(entry.face).includes(normalizedQuery) ||
-      matchingCategories.has(entry.category)
+  return entries
+    .map((entry, index) => ({
+      entry,
+      index,
+      score: Math.max(
+        normalizedFaces[index]?.includes(normalizedQuery) === true ? 4 : 0,
+        categoryScores.get(entry.category) ?? 0,
+      ),
+    }))
+    .filter(
+      ({ entry, score }) =>
+        score > 0 &&
+        (category === ALL_CATEGORIES || entry.category === category),
     )
-  })
+    .toSorted(
+      (left, right) => right.score - left.score || left.index - right.index,
+    )
+    .map(({ entry }) => entry)
 }
