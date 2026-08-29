@@ -6,6 +6,8 @@ a GitHub pull request review.
 This is an unofficial project and is not affiliated with or endorsed by
 GitHub.
 
+![GitHub Review Kaomoji picker beside the Finish your review dialog](docs/images/picker-dark.png)
+
 ## Features
 
 - 1,000 unique kaomoji in 12 Japanese categories
