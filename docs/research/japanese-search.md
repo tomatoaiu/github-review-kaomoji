@@ -1,15 +1,15 @@
 # Japanese Search for the Kaomoji Picker
 
-## Current limitation
+## Baseline before implementation
 
-`src/catalog.ts` applies NFKC, trims, lowercases, and then performs one literal
-substring check against either the face or one category-wide string. The data
-contains only one Japanese keyword for most categories. As a result, a keyword
-such as `ありがとう` matches, while natural variants such as
+`src/catalog.ts` applied NFKC, trimmed, lowercased, and then performed one
+literal substring check against either the face or one category-wide string.
+The data contained only one Japanese keyword for most categories. As a result,
+a keyword such as `ありがとう` matched, while natural variants such as
 `ありがとうございます`, kana variants, synonyms, and more specific visual
-concepts often do not.
+concepts often did not.
 
-This is primarily a metadata and matching problem, not a tokenizer or
+This was primarily a metadata and matching problem, not a tokenizer or
 performance problem. The corpus has only 1,000 faces and 12 top-level intents.
 
 ## Findings
@@ -47,9 +47,10 @@ median of two upstream tags. Tags should preferably be retained during catalog
 curation rather than reconstructed afterward, because curation changed some
 source strings.
 
-## Recommended minimal design
+## Implemented minimal design
 
-Do not add a search dependency yet. Use two deterministic search layers.
+The picker now uses the following two deterministic search layers without a
+search dependency.
 
 ### 1. Natural-language intent matching
 
@@ -91,9 +92,9 @@ faces.
 Do not ship the 41,000-face upstream dataset or a runtime transliteration
 library merely to generate these tags. Precompute the compact metadata once.
 
-## Tests to add first
+## Acceptance cases
 
-Use table-driven expectations for at least:
+The table-driven tests cover at least:
 
 - `ありがとうございます` → 感謝
 - `承認します` and `了解です` → 承認
