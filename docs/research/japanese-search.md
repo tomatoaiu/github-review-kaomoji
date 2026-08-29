@@ -64,8 +64,9 @@ search dependency.
    - 困惑: `わから`, `分から`, `なぜ`, `どうして`, `なんで`
 4. Match an alias contained in the normalized query, so
    `ありがとうございます` matches `ありがとう`.
-5. Preserve alias-prefix matching for search-as-you-type, but require at least
-   two characters to avoid noisy one-character intent matches.
+5. Preserve alias-prefix matching for search-as-you-type. Allow a single
+   Japanese character, but require at least two characters for Latin prefixes
+   to avoid matching every English alias beginning with the same letter.
 
 ### 2. Existing face-character matching
 
@@ -96,6 +97,8 @@ library merely to generate these tags. Precompute the compact metadata once.
 
 The table-driven tests cover at least:
 
+- `あ` → 感謝 and 挨拶
+- `あい` and `あいさつ` → 挨拶
 - `ありがとうございます` → 感謝
 - `承認します` and `了解です` → 承認
 - `うれしい` → 喜び

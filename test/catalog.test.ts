@@ -93,6 +93,46 @@ describe("kaomoji catalog", () => {
     expect(results.every((entry) => entry.category === category)).toBe(true)
   })
 
+  it.each([
+    ["かんしゃ", "感謝"],
+    ["しょうにん", "承認"],
+    ["よろこび", "喜び"],
+    ["はくしゅ", "拍手"],
+    ["おうえん", "応援"],
+    ["しゅくふく", "祝福"],
+    ["あいさつ", "挨拶"],
+    ["しゃざい", "謝罪"],
+    ["こんわく", "困惑"],
+    ["おどろき", "驚き"],
+    ["かなしみ", "悲しみ"],
+    ["いかり", "怒り"],
+  ])("matches a category reading: %s", (query, category) => {
+    const results = searchKaomoji(ALL_CATEGORIES, query)
+
+    expect(results.length).toBeGreaterThan(0)
+    expect(results.every((entry) => entry.category === category)).toBe(true)
+  })
+
+  it("matches short Japanese reading prefixes", () => {
+    const oneCharacterCategories = new Set(
+      searchKaomoji(ALL_CATEGORIES, "あ").map(({ category }) => category),
+    )
+    const twoCharacterResults = searchKaomoji(ALL_CATEGORIES, "あい")
+
+    expect(oneCharacterCategories).toEqual(new Set(["感謝", "挨拶"]))
+    expect(twoCharacterResults).toHaveLength(100)
+    expect(
+      twoCharacterResults.every((entry) => entry.category === "挨拶"),
+    ).toBe(true)
+    const latinResults = searchKaomoji(ALL_CATEGORIES, "a")
+    expect(latinResults).toHaveLength(2)
+    expect(
+      latinResults.every((entry) =>
+        normalizeSearchText(entry.face).includes("a"),
+      ),
+    ).toBe(true)
+  })
+
   it("searches category keywords and face text", () => {
     const approvals = searchKaomoji(ALL_CATEGORIES, "lgtm")
     const partialThanks = searchKaomoji(ALL_CATEGORIES, "ありが")
@@ -104,7 +144,6 @@ describe("kaomoji catalog", () => {
     expect(partialThanks.every((entry) => entry.category === "感謝")).toBe(true)
     expect(omegaFaces.length).toBeGreaterThan(0)
     expect(omegaFaces.every((entry) => entry.face.includes("ω"))).toBe(true)
-    expect(searchKaomoji(ALL_CATEGORIES, "あ")).toEqual([])
     expect(searchKaomoji(ALL_CATEGORIES, "smoke")).toEqual([])
     expect(searchKaomoji("感謝", "not-found")).toEqual([])
   })

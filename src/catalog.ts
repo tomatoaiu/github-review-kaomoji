@@ -42,6 +42,8 @@ export function normalizeSearchText(value: string): string {
 }
 
 const latinTerm = /^[a-z\d]+$/u
+const singleJapaneseCharacter =
+  /^[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]$/u
 
 function queryContainsTerm(query: string, term: string): boolean {
   return latinTerm.test(term)
@@ -50,6 +52,8 @@ function queryContainsTerm(query: string, term: string): boolean {
 }
 
 function intentMatchScore(query: string, terms: string[]): number {
+  const canMatchPrefix =
+    query.length >= 2 || singleJapaneseCharacter.test(query)
   let score = 0
   for (const term of terms) {
     if (query === term) {
@@ -57,7 +61,7 @@ function intentMatchScore(query: string, terms: string[]): number {
     }
     if (queryContainsTerm(query, term)) {
       score = Math.max(score, 2)
-    } else if (query.length >= 2 && term.startsWith(query)) {
+    } else if (canMatchPrefix && term.startsWith(query)) {
       score = Math.max(score, 1)
     }
   }
