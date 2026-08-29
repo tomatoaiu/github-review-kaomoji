@@ -11,7 +11,6 @@ import { calculatePanelLayout } from "./panel-position"
 
 export type KaomojiPickerOptions = {
   dialog: HTMLElement
-  host: HTMLElement
   random?: () => number
   saveSettings: (settings: PickerSettings) => Promise<void>
   settings: PickerSettings
@@ -605,7 +604,7 @@ export function createKaomojiPicker(
   })
 
   const onDocumentPointerDown = (event: PointerEvent): void => {
-    if (state.open && !event.composedPath().includes(options.host)) {
+    if (state.open && !event.composedPath().includes(options.dialog)) {
       close(false)
     }
   }

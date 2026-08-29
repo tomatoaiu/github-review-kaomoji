@@ -56,7 +56,6 @@ function mountPicker(
 
   const picker = createKaomojiPicker(container, {
     dialog,
-    host,
     random,
     saveSettings,
     settings,
@@ -315,6 +314,27 @@ describe("createKaomojiPicker", () => {
       false,
     )
     expect(document.activeElement).toBe(textarea)
+  })
+
+  it("stays open when the review textarea is focused", () => {
+    const { container, textarea } = mountPicker(() => 0, undefined, undefined, {
+      autoClose: false,
+      autoOpen: true,
+    })
+
+    textarea.dispatchEvent(
+      new MouseEvent("pointerdown", { bubbles: true, composed: true }),
+    )
+    textarea.focus()
+
+    expect(document.activeElement).toBe(textarea)
+    const panel = container.querySelector<HTMLElement>(".picker-panel")
+    expect(panel?.hidden).toBe(false)
+
+    document.body.dispatchEvent(
+      new MouseEvent("pointerdown", { bubbles: true, composed: true }),
+    )
+    expect(panel?.hidden).toBe(true)
   })
 
   it("changes and saves picker settings", async () => {

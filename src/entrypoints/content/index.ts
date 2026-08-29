@@ -72,7 +72,6 @@ export default defineContentScript({
             host = shadowHost
             return createKaomojiPicker(container, {
               dialog: elements.dialog,
-              host: shadowHost,
               saveSettings: savePickerSettings,
               settings,
               textarea: elements.textarea,
