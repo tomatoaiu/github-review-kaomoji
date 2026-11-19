@@ -196,7 +196,7 @@ jobs:
         with:
           node-version: 26.13.1
       - name: Install pnpm
-        run: npm install --global pnpm@11.20.0
+        run: npm install --global pnpm@12.20.0
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Check formatting
