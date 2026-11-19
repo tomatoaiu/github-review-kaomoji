@@ -10,7 +10,7 @@
     "dev": "wxt",
     "fmt": "oxfmt --write .",
     "fmt:check": "oxfmt --check .",
-    "lint": "oxlint .",
+    "lint": "OXLINT_TSGOLINT_PATH=node_modules/.bin/tsrs-lint TSRS_FAST=1 oxlint .",
     "postinstall": "wxt prepare",
     "test": "vitest run",
     "test:watch": "vitest",

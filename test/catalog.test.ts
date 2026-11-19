@@ -29,14 +29,17 @@ const forbiddenContent =
   /凸|尻|糞|乳|股|ちん|まん|sex|fuck|セックス|うんこ|死ね|殺す/iu
 
 function includesEmoji(face: string): boolean {
-  return [...face].some((character) => {
+  for (const character of face) {
     const codePoint = character.codePointAt(0) ?? 0
-    return (
+    if (
       (codePoint >= 0x1f_000 && codePoint <= 0x1fa_ff) ||
       character === "\uFE0F" ||
       character === "\u20E3"
-    )
-  })
+    ) {
+      return true
+    }
+  }
+  return false
 }
 
 describe("kaomoji catalog", () => {

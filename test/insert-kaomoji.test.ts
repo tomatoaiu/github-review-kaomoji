@@ -34,9 +34,11 @@ describe("insertKaomoji", () => {
 
     expect(listener).toHaveBeenCalledOnce()
     const event = listener.mock.calls[0]?.[0]
-    expect(event).toBeInstanceOf(InputEvent)
-    expect((event as InputEvent).data).toBe("m(_ _)m")
-    expect((event as InputEvent).inputType).toBe("insertText")
+    if (!(event instanceof InputEvent)) {
+      throw new TypeError("Expected an InputEvent")
+    }
+    expect(event.data).toBe("m(_ _)m")
+    expect(event.inputType).toBe("insertText")
   })
 
   it("does not change unavailable textareas", () => {

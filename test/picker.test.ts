@@ -10,6 +10,15 @@ const manualSettings: PickerSettings = {
   autoOpen: false,
 }
 
+function requireElement(node: Element | null): Element {
+  if (node === null) throw new TypeError("Expected an element")
+  return node
+}
+
+function faceIndex(node: Element | null): string | undefined {
+  return node instanceof HTMLElement ? node.dataset.faceIndex : undefined
+}
+
 function pressKey(target: Element, key: string): KeyboardEvent {
   const event = new KeyboardEvent("keydown", {
     bubbles: true,
@@ -41,18 +50,17 @@ function mountPicker(
   host.append(container)
   dialog.append(textarea, host)
   document.body.append(dialog)
-  dialog.getBoundingClientRect = () =>
-    ({
-      bottom: 640,
-      height: 600,
-      left: 200,
-      right: 900,
-      top: 40,
-      width: 700,
-      x: 200,
-      y: 40,
-      toJSON: () => ({}),
-    }) as DOMRect
+  dialog.getBoundingClientRect = () => ({
+    bottom: 640,
+    height: 600,
+    left: 200,
+    right: 900,
+    top: 40,
+    width: 700,
+    x: 200,
+    y: 40,
+    toJSON: () => ({}),
+  })
 
   const picker = createKaomojiPicker(container, {
     dialog,
@@ -133,19 +141,17 @@ describe("createKaomojiPicker", () => {
     }
     pressKey(thanksCategory, "ArrowRight")
     let activeFace = document.activeElement
-    expect((activeFace as HTMLElement | null)?.dataset.faceIndex).toBe("0")
-    pressKey(activeFace as Element, "ArrowRight")
+    expect(faceIndex(activeFace)).toBe("0")
+    pressKey(requireElement(activeFace), "ArrowRight")
     activeFace = document.activeElement
-    expect((activeFace as HTMLElement | null)?.dataset.faceIndex).toBe("1")
-    pressKey(activeFace as Element, "ArrowLeft")
-    pressKey(document.activeElement as Element, "ArrowLeft")
+    expect(faceIndex(activeFace)).toBe("1")
+    pressKey(requireElement(activeFace), "ArrowLeft")
+    pressKey(requireElement(document.activeElement), "ArrowLeft")
     expect(document.activeElement).toBe(thanksCategory)
     pressKey(thanksCategory, "ArrowLeft")
     expect(document.activeElement).toBe(search)
     pressKey(search, "ArrowDown")
-    expect(
-      (document.activeElement as HTMLElement | null)?.dataset.faceIndex,
-    ).toBe("0")
+    expect(faceIndex(document.activeElement)).toBe("0")
   })
 
   it("selects a new random candidate on each click", async () => {
