@@ -17,14 +17,14 @@ The bundled catalog is a curated and normalized subset of the source data.
 MIT-LICENSED SOFTWARE COMPONENTS
 ===============================================================================
 
-@1natsu/wait-element 4.2.0
+@1natsu/wait-element 5.0.0
 Copyright (c) 1natsu172
 
 @webext-core/isolated-element 3.0.0
 Copyright (c) 2022 Aaron
 
-@wxt-dev/browser 0.2.5
-wxt 0.21.3
+@wxt-dev/browser 0.3.7
+wxt 0.21.5
 Copyright (c) 2023 Aaron
 
 The following license applies to the data and software listed above:

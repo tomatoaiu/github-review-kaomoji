@@ -33,12 +33,17 @@ beforeEach(() => {
 })
 
 describe("picker settings", () => {
-  it("defines local settings with the requested defaults", () => {
+  it("defines local settings with the requested defaults", async () => {
+    // Vitest 5 clears mock history before each test, which drops the
+    // import-time defineItem call. Evaluate the module again inside the test.
+    vi.resetModules()
+    const settings = await import("../src/settings")
+
     expect(storageMock.defineItem).toHaveBeenCalledWith(
       "local:pickerSettings",
-      { fallback: DEFAULT_PICKER_SETTINGS },
+      { fallback: settings.DEFAULT_PICKER_SETTINGS },
     )
-    expect(DEFAULT_PICKER_SETTINGS).toEqual({
+    expect(settings.DEFAULT_PICKER_SETTINGS).toEqual({
       autoClose: false,
       autoOpen: true,
     })

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { PickerSettings } from "../src/settings"
 import { createKaomojiPicker } from "../src/ui/picker"
@@ -65,6 +65,21 @@ function mountPicker(
   mountedPickers.push(picker)
   return { container, dialog, textarea }
 }
+
+const popoverFocusFixId = "jsdom-popover-focus-fix"
+
+// jsdom 31 applies `[popover]:not(:popover-open) { display: none }` but does not
+// implement showPopover. Browsers open the manual popover before focusing, so
+// an open panel must remain focusable here without changing that path.
+beforeEach(() => {
+  if (document.getElementById(popoverFocusFixId) !== null) {
+    return
+  }
+  const style = document.createElement("style")
+  style.id = popoverFocusFixId
+  style.textContent = "[popover]:not([hidden]) { display: block !important; }"
+  document.head.append(style)
+})
 
 afterEach(() => {
   for (const picker of mountedPickers.splice(0)) {
